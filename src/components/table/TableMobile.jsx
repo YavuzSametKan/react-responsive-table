@@ -1,24 +1,31 @@
-import { BsThreeDotsVertical } from "react-icons/bs";
+import { BsThreeDotsVertical } from "react-icons/bs"
+import Transactions from "./Transactions.jsx"
 
 const TableMobile = ({
     head,
     body,
-    selectable = false,
-    selectedRows = [],
-    toggleRowSelection = () => {},
-    toggleSelectAll = () => {},
-    isAllSelected = false,
-    activeMenuIndex = null,
-    toggleMenu = () => {},
-    onDelete = () => {},
-    onUpdate = () => {},
-    onDetail = () => {}
+    rawBody,
+    selectable,
+    selectedRows,
+    toggleRowSelection,
+    toggleSelectAll,
+    isAllSelected,
+    activeMenuIndex,
+    toggleMenu,
+    onDelete,
+    onUpdate,
+    onDetail,
+    handleSort,
+    sorting,
+    isRowSelected,
+    hasActions
 }) => {
     return (
-        <div className="flex flex-col space-y-4">
-            {/* Select All Checkbox */}
+        // Container
+        <div className="flex flex-col overflow-y-auto">
+            {/* Select All */}
             {selectable && (
-                <div className="flex justify-end">
+                <div className="flex justify-end mb-4">
                     <label className="flex items-center space-x-2">
                         <input
                             type="checkbox"
@@ -31,59 +38,58 @@ const TableMobile = ({
                 </div>
             )}
 
-            {/* Render Each Row as a Card */}
+            {/* Table */}
             {body.length > 0 ? (
-                body.map((row, rowIndex) => (
+                <section className="overflow-y-auto scroll-smooth scroll-hidden">
+                {body.map(({ row, originalIndex }, i) => (
                     <div
-                        key={rowIndex}
-                        className="border rounded-md shadow-sm bg-white rounded-md overflow-hidden relative"
+                        key={i}
+                        className="border rounded-md shadow-sm bg-white overflow-hidden relative mb-5"
                     >
-                        {/* Row Header */}
+                        {/* Header */}
                         <header className={`w-full h-12 flex items-center ${selectable ? "justify-between" : "justify-end"} px-3 bg-brand-green text-white`}>
+
+                            {/* Selections */}
                             {selectable && (
                                 <div className="inline-flex justify-end">
                                     <label className="flex items-center space-x-2">
                                         <input
                                             type="checkbox"
-                                            checked={selectedRows.includes(rowIndex)}
-                                            onChange={() => toggleRowSelection(rowIndex)}
+                                            checked={selectedRows.includes(i)}
+                                            onChange={() => toggleRowSelection(i)}
                                             className="form-checkbox"
                                         />
                                         <span>Seç</span>
                                     </label>
                                 </div>
                             )}
-                            <div
-                                className="inline-flex size-8 bg-white text-gray-700 rounded-full items-center justify-center"
-                                onClick={() => toggleMenu(rowIndex)}
-                            >
-                                <BsThreeDotsVertical/>
-                            </div>
-                            {activeMenuIndex === rowIndex && (
-                                <div className="absolute right-0 top-12 bg-white shadow-md rounded-md p-2 z-10">
-                                    <button
-                                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-blue-500"
-                                        onClick={() => onUpdate(rowIndex)}
+
+                            {/* Transactions */}
+                            {hasActions && (
+                                <>
+                                    <span
+                                        className="inline-flex size-8 bg-white text-gray-700 rounded-full items-center justify-center"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            toggleMenu(i)
+                                        }}
                                     >
-                                        Güncelle
-                                    </button>
-                                    <button
-                                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
-                                        onClick={() => onDelete(rowIndex)}
-                                    >
-                                        Sil
-                                    </button>
-                                    <button
-                                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-brand-green"
-                                        onClick={() => onDetail(rowIndex)}
-                                    >
-                                        Detaylar
-                                    </button>
-                                </div>
+                                        <BsThreeDotsVertical/>
+                                    </span>
+                                    {activeMenuIndex === i && (
+                                        <Transactions
+                                            onDelete={onDelete}
+                                            onUpdate={onUpdate}
+                                            onDetail={onDetail}
+                                            rawBody={rawBody}
+                                            originalIndex={originalIndex}
+                                        />
+                                    )}
+                                </>
                             )}
                         </header>
 
-                        {/* Row Data */}
+                        {/* Datas */}
                         <ul>
                             {row.map((cell, cellIndex) => (
                                 <li
@@ -102,12 +108,14 @@ const TableMobile = ({
                             ))}
                         </ul>
                     </div>
-                ))
+                ))}
+                </section>
             ) : (
+                // Not Found Data
                 <div className="text-center text-gray-500">Veri Bulunamadı.</div>
             )}
         </div>
-    );
-};
+    )
+}
 
-export default TableMobile;
+export default TableMobile

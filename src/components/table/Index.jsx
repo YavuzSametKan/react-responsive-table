@@ -1,10 +1,7 @@
-import {useState} from "react";
-import {CgSortAz} from "react-icons/cg";
-import {CgSortZa} from "react-icons/cg";
-import PropTypes from "prop-types";
-import TableMobile from "./TableMobile.jsx";
-import useMediaQuery from "../../hooks/useMediaQuery.js";
-import {BsThreeDotsVertical} from "react-icons/bs";
+import {useState, useEffect} from "react"
+import TableMobile from "./TableMobile.jsx"
+import useMediaQuery from "../../hooks/useMediaQuery.js"
+import TableDesktop from "./TableDesktop.jsx"
 
 const SortOrder = { // SortOrder Enum
     ASC: "ASC",
@@ -13,27 +10,39 @@ const SortOrder = { // SortOrder Enum
 }
 
 const Table = ({
-    head,
-    body,
+    head = [],
+    body = [],
     searchable = false,
     selectable = false,
-    onDelete = () => {},
-    onUpdate = () => {},
-    onDetail = () => {}
+    onDelete = null,
+    onUpdate = null,
+    onDetail = null,
+    textSize = "text-md"
 }) => {
 
     const [search, setSearch] = useState('')
     const [sorting, setSorting] = useState({key: null, orderBy: SortOrder.NONE})
     const [selectedRows, setSelectedRows] = useState([])
-    const [activeMenuIndex, setActiveMenuIndex] = useState(null); // To manage which row's menu is open
+    const [activeMenuIndex, setActiveMenuIndex] = useState(null) // To manage which row's menu is open
 
-    const filteredData = body
-        .filter(items =>
-            items.some(item => {
+    const objectToArray = (data) =>
+        data.map(d => Object.values(d))
+
+    const parseUnvisibleData = (data) =>
+        data.map(row =>
+            row.filter(item =>
+                !(typeof item === "object" && item?.data && item?.visibility === false)
+            )
+        )
+
+    const filteredData = parseUnvisibleData(objectToArray(body))
+        .map((row, index) => ({ row, originalIndex: index })) // original index
+        .filter(({ row }) =>
+            row.some(value => {
                 const searchableContent =
-                    typeof item === "object" && item?.searchableText // Is object?
-                        ? item.searchableText.toString()
-                        : item?.toString()
+                    typeof value === "object" && value?.searchableText
+                        ? value.searchableText.toString()
+                        : value?.toString()
                 return searchableContent
                     ?.toLocaleLowerCase("TR")
                     .includes(search.toLocaleLowerCase("TR"))
@@ -41,9 +50,9 @@ const Table = ({
         )
         .sort((a, b) => {
             if (sorting?.orderBy === SortOrder.ASC) {
-                return a[sorting.key]?.toString()?.localeCompare(b[sorting.key])
+                return a.row[sorting.key]?.toString()?.localeCompare(b.row[sorting.key])
             } else if (sorting?.orderBy === SortOrder.DESC) {
-                return b[sorting.key]?.toString()?.localeCompare(a[sorting.key])
+                return b.row[sorting.key]?.toString()?.localeCompare(a.row[sorting.key])
             }
         })
 
@@ -54,7 +63,7 @@ const Table = ({
                 if (prev.orderBy === SortOrder.ASC) return {key: index, orderBy: SortOrder.DESC} // ASC -> DESC
                 if (prev.orderBy === SortOrder.DESC) return {key: null, orderBy: SortOrder.NONE}  // DESC -> Sorting Off
             }
-            return {key: index, orderBy: SortOrder.ASC}; // Default ASC
+            return {key: index, orderBy: SortOrder.ASC} // Default ASC
         })
     }
 
@@ -82,14 +91,34 @@ const Table = ({
     const isMobile = useMediaQuery("(max-width: 768px)")
 
     const toggleMenu = (index) => {
-        setActiveMenuIndex((prev) => (prev === index ? null : index))
+        if (activeMenuIndex === index) {
+            setActiveMenuIndex(null)
+        } else {
+            setActiveMenuIndex(index)
+        }
     }
 
+    const handleOutsideClick = (event) => {
+        if (!event.target.closest(".table-transactions")) {
+            setActiveMenuIndex(null)
+        }
+    }
+
+    useEffect(() => {
+        document.addEventListener("click", handleOutsideClick)
+        return () => {
+            document.removeEventListener("click", handleOutsideClick)
+        }
+    }, [])
+
+    const hasActions = (onDelete || onUpdate || onDetail) ? true : false
+
     return (
-        <>
+        // Container
+        <section className="max-h-screen flex flex-col p-6">
             {/* Search Area */}
             {searchable && (
-                <div className="flex justify-center mb-6">
+                <div className="flex justify-center items-center mb-4 flex-shrink-0">
                     <input
                         type="search"
                         placeholder="Tabloda Ara..."
@@ -102,9 +131,11 @@ const Table = ({
 
             {/* Table Area */}
             {isMobile ? (
+                // Mobile Table
                 <TableMobile
                     head={head}
                     body={filteredData}
+                    rawBody={body}
                     selectable={selectable}
                     selectedRows={selectedRows}
                     toggleRowSelection={toggleRowSelection}
@@ -115,141 +146,36 @@ const Table = ({
                     onDelete={onDelete}
                     onUpdate={onUpdate}
                     onDetail={onDetail}
+                    handleSort={handleSort}
+                    sorting={sorting}
+                    isRowSelected={isRowSelected}
+                    hasActions={hasActions}
                 />
             ) : (
-            // Default Table (Desktop)
-            <table
-                className="w-full"
-            >
-                <thead className="bg-brand-green h-14">
-                <tr>
-                    {/* Select All Items Area */}
-                    {selectable && (
-                        <th>
-                            <input
-                                type="checkbox"
-                                checked={isAllSelected}
-                                onChange={toggleSelectAll}
-                            />
-                        </th>
-                    )}
-                    {head.map((h, i) => (
-                        <th
-                            key={i}
-                            width={h?.width}
-                            className={`text-white text-sm ${h.sortable && "cursor-pointer"}`}
-                            onClick={() => handleSort(i, h.sortable)}
-                        >
-                            <div className="flex items-center justify-center">
-                                <span
-                                    className={h.sortable && "hover:underline decoration-dashed decoration-brand-shade-green"}>{h.title}</span>
-                                {sorting.key === i && sorting.orderBy === 'ASC' && <CgSortZa className="size-6"/>}
-                                {sorting.key === i && sorting.orderBy === 'DESC' && <CgSortAz className="size-6"/>}
-                            </div>
-                        </th>
-                    ))}
-                    <th className="text-white">İşlemler</th>
-                </tr>
-                </thead>
-                {filteredData.length !== 0 ? (
-                    <tbody>
-                    {filteredData.map((items, i) => (
-                        <tr
-                            key={i}
-                            className={`h-12 even:bg-brand-shade-green odd:bg-white text-center text-sm transition-colors duration-300 border-b border-dotted border-b-transparent ${
-                                isRowSelected(i) ? "!bg-green-200 text-brand-green !border-b-brand-green" : ""
-                            }`}
-                        >
-                            {/* Select Item Area */}
-                            {selectable && (
-                                <td>
-                                    <input
-                                        type="checkbox"
-                                        checked={isRowSelected(i)}
-                                        onChange={() => toggleRowSelection(i)}
-                                    />
-                                </td>
-                            )}
-                            {items.map((item, i) => (
-                                <td key={i}>
-                                    {item && typeof item === "object" && "content" in item
-                                        ? item.content
-                                        : item || "---"}
-                                </td>
-                            ))}
-                            <td className="relative">
-                                <span
-                                    className="inline-flex items-center justify-center cursor-pointer size-8 rounded-full bg-brand-green transition-transform hover:rotate-90"
-                                    onClick={() => toggleMenu(i)}
-                                >
-                                    <BsThreeDotsVertical className="cursor-pointer size-4 text-white"/>
-                                </span>
-                                {activeMenuIndex === i && (
-                                    <div className="absolute right-0 bg-white shadow-md rounded-md p-2 z-10">
-                                        <button
-                                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-blue-500"
-                                            onClick={() => onUpdate(i)}
-                                        >
-                                            Güncelle
-                                        </button>
-                                        <button
-                                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600"
-                                            onClick={() => onDelete(i)}
-                                        >
-                                            Sil
-                                        </button>
-                                        <button
-                                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-brand-green"
-                                            onClick={() => onDelete(i)}
-                                        >
-                                            Detaylar
-                                        </button>
-                                    </div>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
-                    </tbody>
-                ) : (
-                    <tbody>
-                    <tr>
-                        <td
-                            colSpan={head.length + (selectable ? 1 : 0) + ((onUpdate || onDelete || onDetail) ? 1 : 0)} // Ensure it spans all columns
-                            className="text-center h-12 bg-brand-shade-green"
-                        >
-                            Veri Bulunamadı.
-                        </td>
-                    </tr>
-                    </tbody>
-                )}
-            </table>
+                // Desktop Table
+                <TableDesktop
+                    head={head}
+                    body={filteredData}
+                    rawBody={body}
+                    selectable={selectable}
+                    selectedRows={selectedRows}
+                    toggleRowSelection={toggleRowSelection}
+                    toggleSelectAll={toggleSelectAll}
+                    isAllSelected={isAllSelected}
+                    activeMenuIndex={activeMenuIndex}
+                    toggleMenu={toggleMenu}
+                    onDelete={onDelete}
+                    onUpdate={onUpdate}
+                    onDetail={onDetail}
+                    handleSort={handleSort}
+                    sorting={sorting}
+                    isRowSelected={isRowSelected}
+                    hasActions={hasActions}
+                    textSize={textSize}
+                />
             )}
-        </>
+        </section>
     )
 }
 
-// PropTypes definition
-Table.propTypes = {
-    head: PropTypes.arrayOf(
-        PropTypes.shape({
-            title: PropTypes.string.isRequired, // Column title
-            width: PropTypes.number, // Column width (optional)
-            sortable: PropTypes.bool, // Is column sortable? (optional)
-        })
-    ).isRequired,
-    body: PropTypes.arrayOf(
-        PropTypes.arrayOf(
-            PropTypes.oneOfType([
-                PropTypes.any,
-                PropTypes.shape({
-                    content: PropTypes.node, // React node for custom content
-                    searchableText: PropTypes.string, // Text used for searching
-                }),
-            ])
-        )
-    ).isRequired,
-    searchable: PropTypes.bool, // Is search enabled?
-    selectable: PropTypes.bool, // Is row selection enabled?
-}
-
-export default Table;
+export default Table
