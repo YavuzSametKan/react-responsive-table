@@ -1,8 +1,7 @@
-# React + Vite
+# React Responsive Table
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React Responsive Table is a React component designed for creating dynamic and mobile-friendly table layouts. This library ensures that tables adapt seamlessly across various screen sizes while maintaining a clean and functional user interface. With customization options, developers can enhance the user experience and efficiently display data on both desktop and mobile devices.
 
-Currently, two official plugins are available:
+## Purpose
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The primary purpose of Responsive Table UI is to provide a reusable and responsive solution for managing tabular data in React applications. Whether you’re working on a dashboard, an admin panel, or a data-driven web application, this component simplifies the process of creating responsive tables with minimal effort.
