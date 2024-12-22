@@ -50,7 +50,7 @@ function App() {
                           {patient?.status}
                       </span>
                   ),
-                  searchableText: patient?.status,
+                  searchableText: patient?.status
               },
             }))}
             searchable={true}

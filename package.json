@@ -3,7 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://yavuzsametkan.github.io/react-responsive-table/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

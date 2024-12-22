@@ -24,9 +24,9 @@ const TableDesktop = ({
 }) => {
     return (
         // Table Container
-        <section className="flex-grow overflow-y-auto scroll-smooth table-scroll rounded-md">
+        <section className="flex-grow overflow-y-auto scroll-smooth table-scroll rounded-md min-h-[calc(100vh-11rem)]">
             {/* Table */}
-            <table className="w-full flex-grow-0">
+            <table className="w-full table-auto border-collapse">
                 {/* Header */}
                 <thead className="bg-brand-green h-14 w-full">
                     <tr>

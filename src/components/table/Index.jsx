@@ -118,7 +118,7 @@ const Table = ({
         <section className="max-h-screen flex flex-col p-6">
             {/* Search Area */}
             {searchable && (
-                <div className="flex justify-center items-center mb-4 flex-shrink-0">
+                <div className="flex justify-center items-center mb-4 h-20 flex-shrink-0">
                     <input
                         type="search"
                         placeholder="Tabloda Ara..."
